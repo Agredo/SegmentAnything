@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36401.2 d17.14
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SegmentAnythingONNX", "SegmentAnythingONNX\SegmentAnythingONNX.csproj", "{E83F316F-03CE-4DE7-A413-C3175CE3F89F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SegmentAnything.Onnx", "SegmentAnything.Onnx\SegmentAnything.Onnx.csproj", "{FBE3EF34-E19E-46E3-8676-3C521322EDAA}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E83F316F-03CE-4DE7-A413-C3175CE3F89F}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E83F316F-03CE-4DE7-A413-C3175CE3F89F}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E83F316F-03CE-4DE7-A413-C3175CE3F89F}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E83F316F-03CE-4DE7-A413-C3175CE3F89F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FBE3EF34-E19E-46E3-8676-3C521322EDAA}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FBE3EF34-E19E-46E3-8676-3C521322EDAA}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FBE3EF34-E19E-46E3-8676-3C521322EDAA}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FBE3EF34-E19E-46E3-8676-3C521322EDAA}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {B0A8B054-A2E3-440E-BAC8-DCCF9B649087}
+	EndGlobalSection
+EndGlobal

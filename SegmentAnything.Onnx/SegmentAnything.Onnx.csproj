@@ -1,0 +1,61 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    
+    <!-- NuGet Package Information -->
+    <PackageId>SegmentAnything.Onnx</PackageId>
+    <PackageVersion>0.1.0.0</PackageVersion>
+    <Title>Segment Anything ONNX</Title>
+    <Authors>Agredo</Authors>
+    <Company>Agredo</Company>
+    <Product>SegmentAnything.Onnx</Product>
+    <Description>A .NET library for running Segment Anything Model (SAM) and SAM2 using ONNX Runtime. Provides high-performance image segmentation capabilities with support for both SAM and MobileSAM models. Features include point-based prompting, bounding box prompts, and video frame tracking with temporal memory for SAM2.</Description>
+    <Summary>High-performance .NET wrapper for Segment Anything Model (SAM) using ONNX Runtime</Summary>
+    <PackageTags>segmentation;computer-vision;onnx;sam;sam2;mobilesam;image-processing;machine-learning;ai</PackageTags>
+    <PackageProjectUrl>https://github.com/agredo/SegmentAnything.Onnx</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/agredo/SegmentAnything.Onnx</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageRequireLicenseAcceptance>false</PackageRequireLicenseAcceptance>
+    <Copyright>Copyright © Agredo 2025</Copyright>
+    <PackageReleaseNotes>
+      Initial release of SegmentAnything.Onnx library.
+      Features:
+      - Support for SAM and SAM2 models
+      - MobileSAM implementation for lightweight scenarios
+      - Point-based and bounding box prompting
+      - Video frame tracking with temporal memory (SAM2)
+      - GPU acceleration support (CUDA, DirectML, OpenVINO)
+      - Comprehensive utility functions for mask processing
+      - High-performance image preprocessing and postprocessing
+    </PackageReleaseNotes>
+    
+    <!-- Build Configuration -->
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <IncludeSymbols>true</IncludeSymbols>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    
+    <!-- Language and Framework Info -->
+    <LangVersion>13.0</LangVersion>
+    <AssemblyVersion>0.1.0.0</AssemblyVersion>
+    <FileVersion>0.1.0.0</FileVersion>
+    <InformationalVersion>0.1.0</InformationalVersion>
+    <Version>0.1</Version>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.ML.OnnxRuntime.Gpu" Version="1.22.1" />
+    <PackageReference Include="System.Drawing.Common" Version="9.0.8" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+    <None Include="LICENSE" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>
