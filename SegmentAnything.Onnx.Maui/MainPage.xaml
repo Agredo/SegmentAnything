@@ -1,0 +1,47 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<ContentPage
+    x:Class="SegmentAnything.Onnx.Maui.MainPage"
+    xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
+    xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit">
+
+    <ContentPage.Resources>
+        <ResourceDictionary>
+            <toolkit:ByteArrayToImageSourceConverter x:Key="ByteArrayToImageSourceConverter" />
+        </ResourceDictionary>
+    </ContentPage.Resources>
+
+    <ScrollView>
+        <VerticalStackLayout Padding="30,0" Spacing="25">
+
+            <Grid x:Name="CameraContainer">
+                <toolkit:CameraView x:Name="MyCamera" MediaCaptured="MyCamera_MediaCaptured" />
+
+                <Grid ColumnDefinitions="2*,98*,2*" RowDefinitions="2*,98*,2*">
+                    <Border
+                        x:Name="BoundingBoxOverlay"
+                        Grid.Row="1"
+                        Grid.Column="1"
+                        BackgroundColor="Transparent"
+                        HorizontalOptions="Fill"
+                        Stroke="Yellow"
+                        StrokeDashArray="10,5"
+                        StrokeThickness="3"
+                        VerticalOptions="Fill" />
+                </Grid>
+            </Grid>
+
+            <Button
+                x:Name="CaptureButton"
+                Grid.Row="2"
+                Grid.Column="0"
+                Clicked="CaptureButton_Clicked"
+                Text="Capture Image" />
+
+            <Image Source="{Binding MaskedImage, Mode=OneWay, Converter={StaticResource ByteArrayToImageSourceConverter}}" />
+
+
+        </VerticalStackLayout>
+    </ScrollView>
+
+</ContentPage>
