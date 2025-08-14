@@ -8,24 +8,45 @@ namespace SegmentAnything.Onnx.Maui.ViewModels;
 [ObservableObject]
 public partial class MainPageViewModel
 {
-    string encoderPath = @"C:\Projects\Models\SAM\SAM2\sam2_hiera_tiny.encoder.onnx";
-    string decoderPath = @"C:\Projects\Models\SAM\SAM2\sam2_hiera_tiny.decoder.onnx";
+    //string encoderPath = @"C:\Projects\Models\SAM\SAM2\sam2_hiera_tiny.encoder.onnx";
+    //string decoderPath = @"C:\Projects\Models\SAM\SAM2\sam2_hiera_tiny.decoder.onnx";
 
-    string mobileSamDecoderPath = @"C:\Projects\Models\SAM\MobileSam\Qualcom\mobilesam-mobilesamdecoder.onnx\model.onnx\model.onnx";
-    string mobileSamEncoderPath = @"C:\Projects\Models\SAM\MobileSam\Qualcom\mobilesam-mobilesamencoder.onnx\model.onnx\model.onnx";
+    //string mobileSamDecoderPath = @"C:\Projects\Models\SAM\MobileSam\Qualcom\mobilesam-mobilesamdecoder.onnx\model.onnx\model.onnx";
+    //string mobileSamEncoderPath = @"C:\Projects\Models\SAM\MobileSam\Qualcom\mobilesam-mobilesamencoder.onnx\model.onnx\model.onnx";
 
-    ////Android paths for MobileSAM models
-    //string mobileSamDecoderPath = @"/storage/emulated/0/Models/SAM/MobileSAM/decoder";
-    //string mobileSamEncoderPath = @"/storage/emulated/0/Models/SAM/MobileSAM/encoder";
+    //Android paths for MobileSAM models
+    string mobileSamDecoderPath = @"/storage/emulated/0/Models/SAM/MobileSAM/decoder/model.onnx";
+    string mobileSamEncoderPath = @"/storage/emulated/0/Models/SAM/MobileSAM/encoder/model.onnx";
 
-    ////Android paths for SAM2 models
-    //string encoderPath = @"/storage/emulated/0/Models/SAM/SAM2/encoder.onnx";
-    //string decoderPath = @"/storage/emulated/0/Models/SAM/SAM2/decoder.onnx";
+    //Android paths for SAM2 models
+    string encoderPath = @"/storage/emulated/0/Models/SAM/SAM2/encoder.onnx";
+    string decoderPath = @"/storage/emulated/0/Models/SAM/SAM2/decoder.onnx";
 
     public Stream Image { get; set; }
 
     [ObservableProperty]
     public byte[] maskedImage;
+
+    public MainPageViewModel()
+    {
+        PermissionCheck();
+    }
+
+    private async void PermissionCheck()
+    {
+        var status = await Permissions.CheckStatusAsync<Permissions.StorageRead>();
+        if (status != PermissionStatus.Granted)
+        {
+            status = await Permissions.RequestAsync<Permissions.StorageRead>();
+        }
+        if (status != PermissionStatus.Granted)
+        {
+            Debug.WriteLine("Permission denied");
+            return;
+        }
+        
+        Debug.WriteLine("Permission granted");
+    }
 
     public void MaskImage()
     {
@@ -34,8 +55,10 @@ public partial class MainPageViewModel
         var info = codec.Info;        
         var imageBmp = SKBitmap.Decode(codec);
 
-        using var mobileSam = new MobileSAM(mobileSamEncoderPath, mobileSamDecoderPath);
-        SegmentPersonWithBoundingBox(mobileSam, imageBmp);
+        using var sam2 = new SAM2(encoderPath, decoderPath);
+        SegmentPersonWithBoundingBox(sam2, imageBmp);
+        //using var mobileSam = new MobileSAM(mobileSamEncoderPath, mobileSamDecoderPath);
+        //SegmentPersonWithBoundingBox(mobileSam, imageBmp);
     }
 
     private void SegmentPersonWithBoundingBox(SAMModelBase sam2, SKBitmap image)
