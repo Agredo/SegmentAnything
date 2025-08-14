@@ -12,6 +12,9 @@ public partial class MainPageViewModel
     string encoderPath = @"C:\Projects\Models\SAM\SAM2\sam2_hiera_tiny.encoder.onnx";
     string decoderPath = @"C:\Projects\Models\SAM\SAM2\sam2_hiera_tiny.decoder.onnx";
 
+    string mobileSamDecoderPath = @"C:\Projects\Models\SAM\MobileSam\Qualcom\mobilesam-mobilesamdecoder.onnx\model.onnx\model.onnx";
+    string mobileSamEncoderPath = @"C:\Projects\Models\SAM\MobileSam\Qualcom\mobilesam-mobilesamencoder.onnx\model.onnx\model.onnx";
+
     public Stream Image { get; set; }
 
     [ObservableProperty]
@@ -22,10 +25,14 @@ public partial class MainPageViewModel
         var image = new Bitmap(Image);
         using var sam2 = new SAM2(encoderPath, decoderPath);
 
-        SegmentPersonWithBoundingBox(sam2, image);
+        using var mobileSam = new MobileSAM(mobileSamEncoderPath, mobileSamDecoderPath);
+
+        //SegmentPersonWithBoundingBox(sam2, image);
+
+        SegmentPersonWithBoundingBox(mobileSam, image);
     }
 
-    private void SegmentPersonWithBoundingBox(SAM2 sam2, Bitmap image)
+    private void SegmentPersonWithBoundingBox(SAMModelBase sam2, Bitmap image)
     {
         int imageWidth = image.Width;
         int imageHeight = image.Height;
@@ -38,14 +45,14 @@ public partial class MainPageViewModel
         // Ein zentraler Punkt als zusätzlicher Hinweis
         var points = new Point[]
         {
-            new Point(imageWidth/2, (int)(imageHeight * 0.01)), //Oberer Rand (1% des Bildes)
-            new Point(imageWidth / 2, (int)(imageHeight * 0.98)), // Unterer Rand (98% des Bildes)
-            new Point((int)(imageWidth * 0.01), imageHeight / 2), // Linker Rand (1% des Bildes)
+            //new Point(imageWidth/2, (int)(imageHeight * 0.01)), //Oberer Rand (1% des Bildes)
+            //new Point(imageWidth / 2, (int)(imageHeight * 0.98)), // Unterer Rand (98% des Bildes)
+            //new Point((int)(imageWidth * 0.01), imageHeight / 2), // Linker Rand (1% des Bildes)
             new Point((int)(imageWidth * 0.98), imageHeight / 2),  // Rechter Rand (98% des Bildes)
             new Point(imageWidth / 2, imageHeight / 2) // Mitte des Bildes
         };
 
-        var labels = new int[] { 0, 0, 0, 0, 1 };
+        var labels = new int[] { 0,1 };
         var result = sam2.Segment(image, points, labels, boundingBox);
 
         var mi = SAMUtils.ApplyMaskToImage(image, result.Masks[0], System.Drawing.Color.Blue, 0.35f);

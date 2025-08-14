@@ -27,7 +27,7 @@ public class MobileSAM : SAMModelBase
     /// Optimized for fast inference on mobile devices and edge computing scenarios.
     /// </summary>
     /// <param name="image">The input image to segment.</param>
-    /// <param name="points">Array of prompt points.</param>
+    /// <param name="points">Array of prompt points. For MobileSam 2 Points are mandatory!</param>s
     /// <param name="labels">Array of point labels (1 = positive, 0 = negative).</param>
     /// <param name="boundingBox">Optional bounding box prompt.</param>
     /// <returns>Segmentation results containing masks and confidence scores.</returns>
@@ -45,6 +45,28 @@ public class MobileSAM : SAMModelBase
         return DecodeWithPrompts(imageFeatures, points, labels, boundingBox, image.Width, image.Height);
     }
 
+    /// <summary>
+    /// Encodes the input image into feature embeddings using the MobileSAM encoder model.
+    /// The image is preprocessed to the required model input format (1024x1024) and passed through
+    /// the encoder network to generate high-dimensional feature representations.
+    /// </summary>
+    /// <param name="image">The input bitmap image to encode. Must not be null.</param>
+    /// <returns>
+    /// A dense tensor containing the encoded image features with dimensions matching the encoder output.
+    /// These features are used as input for the decoder during the segmentation process.
+    /// </returns>
+    /// <exception cref="ArgumentNullException">Thrown when the image parameter is null.</exception>
+    /// <exception cref="InvalidOperationException">Thrown when the encoder session is not properly initialized.</exception>
+    /// <remarks>
+    /// This method performs the following steps:
+    /// 1. Preprocesses the input image to match model requirements (normalization, resizing)
+    /// 2. Creates a tensor from the preprocessed image data
+    /// 3. Runs inference through the encoder model
+    /// 4. Copies the resulting features to ensure memory safety
+    /// 
+    /// The returned features must be used immediately or stored appropriately as they represent
+    /// the encoded representation of the input image required for segmentation.
+    /// </remarks>
     private DenseTensor<float> EncodeImage(Bitmap image)
     {
         var imageData = PreprocessImage(image);
@@ -65,6 +87,7 @@ public class MobileSAM : SAMModelBase
         return featuresCopy;
     }
 
+
     private SAMResult DecodeWithPrompts(DenseTensor<float> imageFeatures, Point[] points, int[] labels, Rectangle? boundingBox, int originalWidth, int originalHeight)
     {
         // Skalierung der Koordinaten auf das Modell-Format (1024x1024)
@@ -82,7 +105,15 @@ public class MobileSAM : SAMModelBase
             pointLabels[0, i] = labels[i];
         }
 
-        var coordsTensor = new DenseTensor<float>(pointCoords.Cast<float>().ToArray(), new[] { 1, points.Length, 2 });
+        var pointCoordsFlat = new float[points.Length * 2];
+        for (int i = 0; i < points.Length; i++)
+        {
+            pointCoordsFlat[i * 2] = points[i].X * scaleX;
+            pointCoordsFlat[i * 2 + 1] = points[i].Y * scaleY;
+        }
+        var coordsTensor = new DenseTensor<float>(pointCoordsFlat, new[] { 1, points.Length, 2 });
+
+        //var coordsTensor = new DenseTensor<float>(pointCoords.Cast<float>().ToArray(), new[] { 1, points.Length, 2 });
         var labelsTensor = new DenseTensor<float>(pointLabels.Cast<float>().ToArray(), new[] { 1, points.Length });
 
         // Mask input (leer für ersten Durchlauf)
@@ -94,15 +125,15 @@ public class MobileSAM : SAMModelBase
             NamedOnnxValue.CreateFromTensor("image_embeddings", imageFeatures),
             NamedOnnxValue.CreateFromTensor("point_coords", coordsTensor),
             NamedOnnxValue.CreateFromTensor("point_labels", labelsTensor),
-            NamedOnnxValue.CreateFromTensor("mask_input", maskInput),
-            NamedOnnxValue.CreateFromTensor("has_mask_input", hasMaskInput),
+            //NamedOnnxValue.CreateFromTensor("mask_input", maskInput),
+            //NamedOnnxValue.CreateFromTensor("has_mask_input", hasMaskInput),
             //NamedOnnxValue.CreateFromTensor("orig_im_size", new DenseTensor<int>(new int[] { originalHeight, originalWidth }, new[] { 2 }))
         };
 
         using var decoderResults = _decoderSession.Run(decoderInputs);
 
         var masks = decoderResults.First(x => x.Name == "masks").AsTensor<float>();
-        var scores = decoderResults.First(x => x.Name == "iou_predictions").AsTensor<float>();
+        var scores = decoderResults.First(x => x.Name == "masks").AsTensor<float>();
 
         return new SAMResult
         {
