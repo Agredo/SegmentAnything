@@ -1,6 +1,6 @@
 ﻿using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
-using System.Drawing;
+using SkiaSharp;
 
 namespace SegmentAnything.Onnx;
 
@@ -33,8 +33,11 @@ public class MobileSAM : SAMModelBase
     /// <returns>Segmentation results containing masks and confidence scores.</returns>
     /// <exception cref="ArgumentException">Thrown when points and labels arrays have different lengths.</exception>
     /// <exception cref="ArgumentNullException">Thrown when required parameters are null.</exception>
-    public override SAMResult Segment(Bitmap image, Point[] points, int[] labels, Rectangle? boundingBox = null)
+    public override SAMResult Segment(SKBitmap image, SKPointI[] points, int[] labels, SKRectI? boundingBox = null)
     {
+        if (image == null) throw new ArgumentNullException(nameof(image));
+        if (points == null) throw new ArgumentNullException(nameof(points));
+        if (labels == null) throw new ArgumentNullException(nameof(labels));
         if (points.Length != labels.Length)
             throw new ArgumentException("Points and labels must have the same length");
 
@@ -67,7 +70,7 @@ public class MobileSAM : SAMModelBase
     /// The returned features must be used immediately or stored appropriately as they represent
     /// the encoded representation of the input image required for segmentation.
     /// </remarks>
-    private DenseTensor<float> EncodeImage(Bitmap image)
+    private DenseTensor<float> EncodeImage(SKBitmap image)
     {
         var imageData = PreprocessImage(image);
         var imageTensor = new DenseTensor<float>(imageData, new[] { 1, 3, ImageSize, ImageSize });
@@ -88,7 +91,7 @@ public class MobileSAM : SAMModelBase
     }
 
 
-    private SAMResult DecodeWithPrompts(DenseTensor<float> imageFeatures, Point[] points, int[] labels, Rectangle? boundingBox, int originalWidth, int originalHeight)
+    private SAMResult DecodeWithPrompts(DenseTensor<float> imageFeatures, SKPointI[] points, int[] labels, SKRectI? boundingBox, int originalWidth, int originalHeight)
     {
         // Skalierung der Koordinaten auf das Modell-Format (1024x1024)
         float scaleX = (float)ImageSize / originalWidth;

@@ -1,10 +1,9 @@
 ﻿using Microsoft.ML.OnnxRuntime;
-using System.Drawing;
-using System.Drawing.Imaging;
+using SkiaSharp;
 
 namespace SegmentAnything.Onnx;
 
-// Base-Klasse für SAM-Modelle
+// Base-Klasse für SAM-Modelle (SkiaSharp Variante)
 public abstract class SAMModelBase : IDisposable
 {
     protected InferenceSession _encoderSession;
@@ -49,7 +48,7 @@ public abstract class SAMModelBase : IDisposable
         {
             sessionOptions.AppendExecutionProvider_Nnapi();
         }
-        else if(availableProviders.Contains("CANNExecutionProvider"))
+        else if (availableProviders.Contains("CANNExecutionProvider"))
         {
             sessionOptions.AppendExecutionProvider("CANNExecutionProvider");
         }
@@ -59,48 +58,55 @@ public abstract class SAMModelBase : IDisposable
         }
     }
 
-    protected virtual float[] PreprocessImage(Bitmap image)
+    protected virtual float[] PreprocessImage(SKBitmap image)
     {
-        // Resize und Normalisierung für SAM (ImageNet stats)
-        var resized = new Bitmap(image, ImageSize, ImageSize);
+        if (image == null) throw new ArgumentNullException(nameof(image));
+
+        // Resize (1024x1024) & Normalisierung (ImageNet Stats)
+        using var source = EnsureFormat(image, SKColorType.Rgba8888);
+        using var resized = new SKBitmap(ImageSize, ImageSize, SKColorType.Rgba8888, SKAlphaType.Premul);
+        source.ScalePixels(resized, SKFilterQuality.Medium);
+
         var pixels = new float[3 * ImageSize * ImageSize];
 
-        var bitmapData = resized.LockBits(
-            new Rectangle(0, 0, ImageSize, ImageSize),
-            ImageLockMode.ReadOnly,
-            PixelFormat.Format24bppRgb);
-
+        // Direkter Zugriff auf Pixel (RGBA8888)
+        using var pixmap = resized.PeekPixels();
         unsafe
         {
-            byte* ptr = (byte*)bitmapData.Scan0;
+            byte* ptr = (byte*)pixmap.GetPixels();
+            int stride = pixmap.RowBytes; // Bytes pro Zeile
 
             for (int y = 0; y < ImageSize; y++)
             {
                 for (int x = 0; x < ImageSize; x++)
                 {
-                    int pixelIndex = y * bitmapData.Stride + x * 3;
+                    int pixelIndex = y * stride + x * 4; // RGBA
 
-                    // BGR zu RGB und Normalisierung (ImageNet Stats)
-                    float r = (ptr[pixelIndex + 2] / 255.0f - 0.485f) / 0.229f;
+                    float r = (ptr[pixelIndex + 0] / 255.0f - 0.485f) / 0.229f;
                     float g = (ptr[pixelIndex + 1] / 255.0f - 0.456f) / 0.224f;
-                    float b = (ptr[pixelIndex] / 255.0f - 0.406f) / 0.225f;
+                    float b = (ptr[pixelIndex + 2] / 255.0f - 0.406f) / 0.225f;
 
-                    // Channel-first Format: [C, H, W]
                     int baseIndex = y * ImageSize + x;
-                    pixels[baseIndex] = r;                                    // R channel
-                    pixels[baseIndex + ImageSize * ImageSize] = g;           // G channel
-                    pixels[baseIndex + 2 * ImageSize * ImageSize] = b;       // B channel
+                    pixels[baseIndex] = r;                                         // R
+                    pixels[baseIndex + ImageSize * ImageSize] = g;                // G
+                    pixels[baseIndex + 2 * ImageSize * ImageSize] = b;            // B
                 }
             }
         }
 
-        resized.UnlockBits(bitmapData);
-        resized.Dispose();
-
         return pixels;
     }
 
-    public abstract SAMResult Segment(Bitmap image, Point[] points, int[] labels, Rectangle? boundingBox = null);
+    private static SKBitmap EnsureFormat(SKBitmap bmp, SKColorType targetType)
+    {
+        if (bmp.ColorType == targetType) return bmp.Copy();
+        var converted = new SKBitmap(bmp.Width, bmp.Height, targetType, SKAlphaType.Premul);
+        using var canvas = new SKCanvas(converted);
+        canvas.DrawBitmap(bmp, 0, 0);
+        return converted;
+    }
+
+    public abstract SAMResult Segment(SKBitmap image, SKPointI[] points, int[] labels, SKRectI? boundingBox = null);
 
     public virtual void Dispose()
     {

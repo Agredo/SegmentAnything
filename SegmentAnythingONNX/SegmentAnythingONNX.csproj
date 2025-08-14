@@ -14,4 +14,8 @@
     <ProjectReference Include="..\SegmentAnything.Onnx\SegmentAnything.Onnx.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="SkiaSharp" Version="3.119.0" />
+  </ItemGroup>
+
 </Project>

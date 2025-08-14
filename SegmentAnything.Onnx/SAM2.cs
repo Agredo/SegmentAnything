@@ -1,11 +1,11 @@
 ﻿using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
-using System.Drawing;
+using SkiaSharp;
 
 namespace SegmentAnything.Onnx;
 
 /// <summary>
-/// SAM2 implementation with enhanced video support and temporal memory.
+/// SAM2 implementation with enhanced video support and temporal memory (SkiaSharp variant).
 /// Provides high-performance image segmentation with support for video frame tracking.
 /// </summary>
 public class SAM2 : SAMModelBase
@@ -36,7 +36,7 @@ public class SAM2 : SAMModelBase
     /// <returns>Segmentation results containing masks and confidence scores.</returns>
     /// <exception cref="ArgumentException">Thrown when points and labels arrays have different lengths.</exception>
     /// <exception cref="ArgumentNullException">Thrown when required parameters are null.</exception>
-    public override SAMResult Segment(Bitmap image, Point[] points, int[] labels, Rectangle? boundingBox = null)
+    public override SAMResult Segment(SKBitmap image, SKPointI[] points, int[] labels, SKRectI? boundingBox = null)
     {
         return SegmentFrame(image, points, labels, 0, boundingBox);
     }
@@ -53,8 +53,11 @@ public class SAM2 : SAMModelBase
     /// <returns>Segmentation results with temporal consistency.</returns>
     /// <exception cref="ArgumentException">Thrown when points and labels arrays have different lengths.</exception>
     /// <exception cref="ArgumentNullException">Thrown when required parameters are null.</exception>
-    public SAMResult SegmentFrame(Bitmap image, Point[] points, int[] labels, int frameIndex, Rectangle? boundingBox = null)
+    public SAMResult SegmentFrame(SKBitmap image, SKPointI[] points, int[] labels, int frameIndex, SKRectI? boundingBox = null)
     {
+        if (image == null) throw new ArgumentNullException(nameof(image));
+        if (points == null) throw new ArgumentNullException(nameof(points));
+        if (labels == null) throw new ArgumentNullException(nameof(labels));
         if (points.Length != labels.Length)
             throw new ArgumentException("Points and labels must have the same length");
 
@@ -65,7 +68,7 @@ public class SAM2 : SAMModelBase
         return DecodeWithTemporalContext(encoderOutputs, points, labels, frameIndex, boundingBox, image.Width, image.Height);
     }
 
-    private EncoderOutputs EncodeImageWithMemory(Bitmap image, int frameIndex)
+    private EncoderOutputs EncodeImageWithMemory(SKBitmap image, int frameIndex)
     {
         var imageData = PreprocessImage(image);
         var imageTensor = new DenseTensor<float>(imageData, new[] { 1, 3, ImageSize, ImageSize });
@@ -92,8 +95,8 @@ public class SAM2 : SAMModelBase
         };
     }
 
-    private SAMResult DecodeWithTemporalContext(EncoderOutputs encoderOutputs, Point[] points, int[] labels,
-        int frameIndex, Rectangle? boundingBox, int originalWidth, int originalHeight)
+    private SAMResult DecodeWithTemporalContext(EncoderOutputs encoderOutputs, SKPointI[] points, int[] labels,
+        int frameIndex, SKRectI? boundingBox, int originalWidth, int originalHeight)
     {
         // Koordinaten skalieren
         float scaleX = (float)ImageSize / originalWidth;

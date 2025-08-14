@@ -1,5 +1,4 @@
-﻿using System.Drawing;
-using System.Drawing.Imaging;
+﻿using SkiaSharp;
 
 namespace SegmentAnything.Onnx;
 
@@ -44,7 +43,7 @@ public class SAMResult
     /// <param name="width">Target width for the output bitmap. Uses OriginalWidth if null.</param>
     /// <param name="height">Target height for the output bitmap. Uses OriginalHeight if null.</param>
     /// <returns>A bitmap representation of the best mask, or null if no masks are available.</returns>
-    public Bitmap GetBestMaskAsBitmap(int? width = null, int? height = null)
+    public SKBitmap GetBestMaskAsBitmap(int? width = null, int? height = null)
     {
         if (Masks == null || Masks.Length == 0)
             return null;
@@ -73,15 +72,15 @@ public class SAMResult
     /// <param name="width">Target width for the output bitmaps. Uses OriginalWidth if null.</param>
     /// <param name="height">Target height for the output bitmaps. Uses OriginalHeight if null.</param>
     /// <returns>An array of bitmap representations for all masks.</returns>
-    public Bitmap[] GetAllMasksAsBitmaps(int? width = null, int? height = null)
+    public SKBitmap[] GetAllMasksAsBitmaps(int? width = null, int? height = null)
     {
         if (Masks == null)
-            return new Bitmap[0];
+            return Array.Empty<SKBitmap>();
 
         int targetWidth = width ?? OriginalWidth;
         int targetHeight = height ?? OriginalHeight;
 
-        var bitmaps = new Bitmap[Masks.Length];
+        var bitmaps = new SKBitmap[Masks.Length];
         for (int i = 0; i < Masks.Length; i++)
         {
             bitmaps[i] = MaskToBitmapCorrected(Masks[i], targetWidth, targetHeight);
@@ -89,102 +88,79 @@ public class SAMResult
         return bitmaps;
     }
 
-    private Bitmap MaskToBitmapCorrected(float[,] mask, int targetWidth, int targetHeight)
+    private SKBitmap MaskToBitmapCorrected(float[,] mask, int targetWidth, int targetHeight)
     {
         int maskHeight = mask.GetLength(0);
         int maskWidth = mask.GetLength(1);
 
-        var bitmap = new Bitmap(targetWidth, targetHeight, PixelFormat.Format24bppRgb);
+        var bitmap = new SKBitmap(targetWidth, targetHeight, SKColorType.Rgba8888, SKAlphaType.Opaque);
+        using var pixmap = bitmap.PeekPixels();
 
-        var bitmapData = bitmap.LockBits(
-            new Rectangle(0, 0, targetWidth, targetHeight),
-            ImageLockMode.WriteOnly,
-            PixelFormat.Format24bppRgb);
-
-        try
+        unsafe
         {
-            unsafe
+            byte* ptr = (byte*)pixmap.GetPixels();
+            int stride = pixmap.RowBytes;
+            for (int y = 0; y < targetHeight; y++)
             {
-                byte* ptr = (byte*)bitmapData.Scan0;
-                int stride = bitmapData.Stride;
-
-                for (int y = 0; y < targetHeight; y++)
+                for (int x = 0; x < targetWidth; x++)
                 {
-                    for (int x = 0; x < targetWidth; x++)
-                    {
-                        // Korrekte Skalierung von Target zu Mask Koordinaten
-                        int maskX = Math.Min((int)((float)x / targetWidth * maskWidth), maskWidth - 1);
-                        int maskY = Math.Min((int)((float)y / targetHeight * maskHeight), maskHeight - 1);
+                    // Korrekte Skalierung von Target zu Mask Koordinaten
+                    int maskX = Math.Min((int)((float)x / targetWidth * maskWidth), maskWidth - 1);
+                    int maskY = Math.Min((int)((float)y / targetHeight * maskHeight), maskHeight - 1);
 
-                        float logit = mask[maskY, maskX];
-                        float probability = 1.0f / (1.0f + MathF.Exp(-logit));
-                        byte intensity = probability > 0.5f ? (byte)255 : (byte)0;
+                    float logit = mask[maskY, maskX];
+                    float probability = 1.0f / (1.0f + MathF.Exp(-logit));
+                    byte intensity = probability > 0.5f ? (byte)255 : (byte)0;
 
-                        int pixelIndex = y * stride + x * 3;
-                        ptr[pixelIndex] = intensity;     // B
-                        ptr[pixelIndex + 1] = intensity; // G
-                        ptr[pixelIndex + 2] = intensity; // R
-                    }
+                    int pixelIndex = y * stride + x * 4; // RGBA
+                    ptr[pixelIndex + 0] = intensity; // R
+                    ptr[pixelIndex + 1] = intensity; // G
+                    ptr[pixelIndex + 2] = intensity; // B
+                    ptr[pixelIndex + 3] = 255;       // A
                 }
             }
-        }
-        finally
-        {
-            bitmap.UnlockBits(bitmapData);
         }
 
         return bitmap;
     }
 
-    private Bitmap MaskToBitmap(float[,] mask, int targetWidth, int targetHeight)
+    private SKBitmap MaskToBitmap(float[,] mask, int targetWidth, int targetHeight)
     {
         int maskHeight = mask.GetLength(0);
         int maskWidth = mask.GetLength(1);
 
-        var bitmap = new Bitmap(targetWidth, targetHeight, PixelFormat.Format24bppRgb);
+        var bitmap = new SKBitmap(targetWidth, targetHeight, SKColorType.Rgba8888, SKAlphaType.Opaque);
+        using var pixmap = bitmap.PeekPixels();
 
-        var bitmapData = bitmap.LockBits(
-            new Rectangle(0, 0, targetWidth, targetHeight),
-            ImageLockMode.WriteOnly,
-            PixelFormat.Format24bppRgb);
-
-        try
+        unsafe
         {
-            unsafe
+            byte* ptr = (byte*)pixmap.GetPixels();
+            int stride = pixmap.RowBytes;
+            for (int y = 0; y < targetHeight; y++)
             {
-                byte* ptr = (byte*)bitmapData.Scan0;
-                int stride = bitmapData.Stride;
-
-                for (int y = 0; y < targetHeight; y++)
+                for (int x = 0; x < targetWidth; x++)
                 {
-                    for (int x = 0; x < targetWidth; x++)
-                    {
-                        int maskX = Math.Min((int)((float)x / targetWidth * maskWidth), maskWidth - 1);
-                        int maskY = Math.Min((int)((float)y / targetHeight * maskHeight), maskHeight - 1);
+                    int maskX = Math.Min((int)((float)x / targetWidth * maskWidth), maskWidth - 1);
+                    int maskY = Math.Min((int)((float)y / targetHeight * maskHeight), maskHeight - 1);
 
-                        float logit = mask[maskY, maskX];
+                    float logit = mask[maskY, maskX];
 
-                        // Sigmoid-Funktion anwenden für Wahrscheinlichkeit
-                        float probability = 1.0f / (1.0f + MathF.Exp(-logit));
+                    // Sigmoid-Funktion anwenden für Wahrscheinlichkeit
+                    float probability = 1.0f / (1.0f + MathF.Exp(-logit));
 
-                        // Binäre Maske: Schwellenwert bei 0.5
-                        byte intensity = probability > 0.5f ? (byte)255 : (byte)0;
+                    // Binäre Maske: Schwellenwert bei 0.5
+                    byte intensity = probability > 0.5f ? (byte)255 : (byte)0;
 
-                        int pixelIndex = y * stride + x * 3;
+                    int pixelIndex = y * stride + x * 4; // RGBA
 
-                        // BGR Format für 24bpp
-                        ptr[pixelIndex] = intensity;     // B
-                        ptr[pixelIndex + 1] = intensity; // G
-                        ptr[pixelIndex + 2] = intensity; // R
-                    }
+                    // RBG Format für 32bpp
+                    ptr[pixelIndex + 0] = intensity;
+                    ptr[pixelIndex + 1] = intensity;
+                    ptr[pixelIndex + 2] = intensity;
+                    ptr[pixelIndex + 3] = 255;
                 }
             }
         }
-        finally
-        {
-            bitmap.UnlockBits(bitmapData);
-        }
-
         return bitmap;
     }
 }

@@ -15,7 +15,7 @@
         <VerticalStackLayout Padding="30,0" Spacing="25">
 
             <Grid x:Name="CameraContainer">
-                <toolkit:CameraView x:Name="MyCamera" MediaCaptured="MyCamera_MediaCaptured" />
+                <toolkit:CameraView x:Name="MyCamera" />
 
                 <Grid ColumnDefinitions="2*,98*,2*" RowDefinitions="2*,98*,2*">
                     <Border
