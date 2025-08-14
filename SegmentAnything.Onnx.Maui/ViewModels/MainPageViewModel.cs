@@ -9,11 +9,18 @@ namespace SegmentAnything.Onnx.Maui.ViewModels;
 [ObservableObject]
 public partial class MainPageViewModel
 {
-    string encoderPath = @"C:\Projects\Models\SAM\SAM2\sam2_hiera_tiny.encoder.onnx";
-    string decoderPath = @"C:\Projects\Models\SAM\SAM2\sam2_hiera_tiny.decoder.onnx";
+    //string encoderPath = @"C:\Projects\Models\SAM\SAM2\sam2_hiera_tiny.encoder.onnx";
+    //string decoderPath = @"C:\Projects\Models\SAM\SAM2\sam2_hiera_tiny.decoder.onnx";
 
-    string mobileSamDecoderPath = @"C:\Projects\Models\SAM\MobileSam\Qualcom\mobilesam-mobilesamdecoder.onnx\model.onnx\model.onnx";
-    string mobileSamEncoderPath = @"C:\Projects\Models\SAM\MobileSam\Qualcom\mobilesam-mobilesamencoder.onnx\model.onnx\model.onnx";
+    //string mobileSamDecoderPath = @"C:\Projects\Models\SAM\MobileSam\Qualcom\mobilesam-mobilesamdecoder.onnx\model.onnx\model.onnx";
+    //string mobileSamEncoderPath = @"C:\Projects\Models\SAM\MobileSam\Qualcom\mobilesam-mobilesamencoder.onnx\model.onnx\model.onnx";
+
+    // Android internal Path
+    string mobileSamDecoderPath = @"/storage/emulated/0/Models/SAM/MobileSAM/decoder";
+    string mobileSamEncoderPath = @"/storage/emulated/0/Models/SAM/MobileSAM/encoder";
+
+    string encoderPath = @"/storage/emulated/0/Models/SAM/SAM2/encoder.onnx";
+    string decoderPath = @"/storage/emulated/0/Models/SAM/SAM2/decoder.onnx";
 
     public Stream Image { get; set; }
 
@@ -23,11 +30,10 @@ public partial class MainPageViewModel
     public void MaskImage()
     {
         var image = new Bitmap(Image);
-        using var sam2 = new SAM2(encoderPath, decoderPath);
+        //using var sam2 = new SAM2(encoderPath, decoderPath);
+        //SegmentPersonWithBoundingBox(sam2, image);
 
         using var mobileSam = new MobileSAM(mobileSamEncoderPath, mobileSamDecoderPath);
-
-        //SegmentPersonWithBoundingBox(sam2, image);
 
         SegmentPersonWithBoundingBox(mobileSam, image);
     }

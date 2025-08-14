@@ -21,6 +21,7 @@
 		<Nullable>enable</Nullable>
 		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
 		<Platforms>AnyCPU;x64;ARM64;ARM32</Platforms>
+		
 
 		<!-- Display name -->
 		<ApplicationTitle>SegmentAnything.Onnx.Maui</ApplicationTitle>
@@ -37,7 +38,7 @@
 
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'ios'">15.0</SupportedOSPlatformVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'maccatalyst'">15.0</SupportedOSPlatformVersion>
-		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">21.0</SupportedOSPlatformVersion>
+		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'android'">24.0</SupportedOSPlatformVersion>
 		<SupportedOSPlatformVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</SupportedOSPlatformVersion>
 		<TargetPlatformMinVersion Condition="$([MSBuild]::GetTargetPlatformIdentifier('$(TargetFramework)')) == 'windows'">10.0.17763.0</TargetPlatformMinVersion>
 	</PropertyGroup>
@@ -94,6 +95,32 @@
 		<ApplicationTitle>segmentanything</ApplicationTitle>
 		<ApplicationId>com.companyname.segmentanything.onnx.maui</ApplicationId>
 		<RuntimeIdentifier>win-arm64</RuntimeIdentifier>
+	</PropertyGroup>
+	
+	<!--Android-->
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-android35.0|ARM64'">
+		<ApplicationTitle>segmentanything</ApplicationTitle>
+		<ApplicationId>com.companyname.segmentanything.onnx.maui</ApplicationId>
+		<EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
+		<EnableLLVM>False</EnableLLVM>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Release|net9.0-android35.0|ARM64'">
+		<ApplicationTitle>segmentanything</ApplicationTitle>
+		<ApplicationId>com.companyname.segmentanything.onnx.maui</ApplicationId>
+		<EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
+		<EnableLLVM>False</EnableLLVM>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-android35.0|x64'">
+		<ApplicationTitle>segmentanything</ApplicationTitle>
+		<ApplicationId>com.companyname.segmentanything.onnx.maui</ApplicationId>
+		<EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
+		<EnableLLVM>False</EnableLLVM>
+	</PropertyGroup>
+	<PropertyGroup Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Debug|net9.0-android35.0|AnyCPU'">
+		<ApplicationTitle>segmentanything</ApplicationTitle>
+		<ApplicationId>com.companyname.segmentanything.onnx.maui</ApplicationId>
+		<EmbedAssembliesIntoApk>True</EmbedAssembliesIntoApk>
+		<EnableLLVM>False</EnableLLVM>
 	</PropertyGroup>
 	
 </Project>

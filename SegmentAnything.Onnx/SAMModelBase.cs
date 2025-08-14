@@ -45,6 +45,14 @@ public abstract class SAMModelBase : IDisposable
         {
             sessionOptions.AppendExecutionProvider_OpenVINO();
         }
+        else if (availableProviders.Contains("NnapiExecutionProvider"))
+        {
+            sessionOptions.AppendExecutionProvider_Nnapi();
+        }
+        else if(availableProviders.Contains("CANNExecutionProvider"))
+        {
+            sessionOptions.AppendExecutionProvider("CANNExecutionProvider");
+        }
         else
         {
             throw new NotSupportedException("No supported execution provider found. Please install ONNX Runtime with GPU support.");
