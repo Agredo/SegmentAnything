@@ -34,7 +34,6 @@ A console application for batch processing and testing SAM models.
 - **📍 Flexible Prompting**: Point-based prompts, bounding box prompts, and combinations
 - **🛠️ Comprehensive Utilities**: Built-in image processing and mask manipulation tools
 - **📱 Cross-Platform**: Works on Windows, Linux, macOS, Android, and iOS
-- **📸 Real-Time Processing**: Live camera integration in MAUI app
 - **⚡ Easy Integration**: Simple API designed for .NET applications
 
 ## 🎯 MAUI App Features
@@ -43,7 +42,6 @@ The SegmentAnything.Onnx.Maui project showcases:
 
 - **📷 Live Camera Integration**: Uses CommunityToolkit.Maui.Camera for real-time image capture
 - **🎯 Intelligent Segmentation**: Automatic person detection using strategic point placement
-- **🖼️ Visual Feedback**: Real-time mask overlay with bounding box visualization
 - **📱 Cross-Platform UI**: Runs on Windows, Android, iOS, and macOS
 - **⚡ MVVM Pattern**: Clean architecture using CommunityToolkit.Mvvm
 
@@ -72,7 +70,7 @@ Download ONNX model files and place them in `C:\Projects\Models\SAM\SAM2\`:
 
 Model files can be obtained from:
 - [Official SAM2 repository](https://github.com/facebookresearch/segment-anything-2)
-- [Hugging Face SAM2 models](https://huggingface.co/facebook/sam2-hiera-tiny)
+- [Hugging Face SAM2 models]([https://huggingface.co/facebook/sam2-hiera-tiny](https://huggingface.co/vietanhdev/segment-anything-2-onnx-models/tree/main))
 
 ### 3. Run the Projects
 
@@ -155,12 +153,11 @@ SegmentAnything.Onnx.Maui/
 
 ## 🎯 Advanced Segmentation Strategies
 
-The MAUI app demonstrates an advanced segmentation approach:
+The MAUI app demonstrates an advanced segmentation approach to detect a sheet in the center of the camera image:
 
 1. **Strategic Point Placement**: Places points at image edges and center
 2. **Bounding Box Integration**: Uses nearly full-image bounding box for context
 3. **Positive/Negative Labels**: Combines edge negatives with center positive
-4. **Real-time Processing**: Processes camera frames as they're captured
 
 ```csharp
 // Strategic point placement for person segmentation
@@ -196,7 +193,7 @@ var labels = new int[] { 0, 0, 0, 0, 1 };  // Edges negative, center positive
 - Mobile development with .NET
 
 ### Required NuGet Packages (Already Included)
-- `Microsoft.ML.OnnxRuntime.QNN` - ONNX Runtime with hardware acceleration
+- `Microsoft.ML.OnnxRuntime.QNN` - ONNX Runtime with hardware acceleration (for ARM64, use `Microsoft.ML.OnnxRuntime.GPU` for x64)
 - `CommunityToolkit.Maui` - MAUI community extensions
 - `CommunityToolkit.Maui.Camera` - Camera integration
 - `CommunityToolkit.Mvvm` - MVVM toolkit
@@ -223,11 +220,6 @@ The library automatically detects and configures the best available execution pr
 **Model Files Not Found**
 - Ensure ONNX model files are in the correct directory
 - Update paths in `MainPageViewModel.cs` if using different locations
-
-**GPU Memory Issues**
-- Reduce image resolution
-- Dispose of SAM instances after use
-- Check available GPU memory
 
 **Platform-Specific Issues**
 - Ensure proper platform workloads are installed
@@ -259,7 +251,6 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 For issues, questions, or feature requests:
 - 🐛 [GitHub Issues](https://github.com/agredo/SegmentAnything.Onnx/issues)
 - 💬 [Discussions](https://github.com/agredo/SegmentAnything.Onnx/discussions)
-- 📧 Contact: support@agredo.com
 
 ---
 
