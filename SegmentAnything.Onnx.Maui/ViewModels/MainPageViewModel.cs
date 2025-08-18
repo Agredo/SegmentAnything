@@ -1,4 +1,5 @@
-﻿using CommunityToolkit.Mvvm.ComponentModel;
+﻿using CommunityToolkit.Maui.Storage;
+using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Microsoft.ML.OnnxRuntime;
 using SkiaSharp;
@@ -9,13 +10,13 @@ namespace SegmentAnything.Onnx.Maui.ViewModels;
 [ObservableObject]
 public partial class MainPageViewModel
 {
-    // Windows paths for SAM2 models
-    string encoderPath = @"C:\Projects\Models\SAM\SAM2\sam2_hiera_tiny.encoder.onnx";
-    string decoderPath = @"C:\Projects\Models\SAM\SAM2\sam2_hiera_tiny.decoder.onnx";
+    //// Windows paths for SAM2 models
+    //string encoderPath = @"C:\Projects\Models\SAM\SAM2\sam2_hiera_tiny.encoder.onnx";
+    //string decoderPath = @"C:\Projects\Models\SAM\SAM2\sam2_hiera_tiny.decoder.onnx";
 
-    // Windows paths for MobileSAM models
-    string mobileSamDecoderPath = @"C:\Projects\Models\SAM\MobileSam\Qualcom\mobilesam-mobilesamdecoder.onnx\model.onnx\model.onnx";
-    string mobileSamEncoderPath = @"C:\Projects\Models\SAM\MobileSam\Qualcom\mobilesam-mobilesamencoder.onnx\model.onnx\model.onnx";
+    //// Windows paths for MobileSAM models
+    //string mobileSamDecoderPath = @"C:\Projects\Models\SAM\MobileSam\Qualcom\mobilesam-mobilesamdecoder.onnx\model.onnx\model.onnx";
+    //string mobileSamEncoderPath = @"C:\Projects\Models\SAM\MobileSam\Qualcom\mobilesam-mobilesamencoder.onnx\model.onnx\model.onnx";
 
     ////Android paths for MobileSAM models
     //string mobileSamDecoderPath = @"/storage/emulated/0/Models/SAM/MobileSAM/decoder/model.onnx";
@@ -30,11 +31,27 @@ public partial class MainPageViewModel
     [ObservableProperty]
     public byte[] maskedImage;
 
+    [ObservableProperty]
+    public string encoderPath;
+
+    [ObservableProperty]
+    public string decoderPath;
+
     private SAMModelBase sam;
 
     public MainPageViewModel()
     {
         PermissionCheck();
+
+        EncoderPath = Preferences.Get("encoderPath", string.Empty);
+        DecoderPath = Preferences.Get("decoderPath", string.Empty);
+
+        if(!string.IsNullOrEmpty(EncoderPath) && !string.IsNullOrEmpty(DecoderPath))
+        {
+            //sam = new SAM2(EncoderPath, DecoderPath);
+
+            sam = new MobileSAM(EncoderPath, DecoderPath, ConfigureExecutionProvider);
+        }
     }
 
     private async void PermissionCheck()
@@ -51,10 +68,70 @@ public partial class MainPageViewModel
         }
         
         Debug.WriteLine("Permission granted");
+    }
 
-        //sam = new SAM2(encoderPath, decoderPath);
+    [RelayCommand]
+    private void LoadSAM()
+    {
+        if (string.IsNullOrEmpty(EncoderPath) || string.IsNullOrEmpty(DecoderPath))
+        {
+            Debug.WriteLine("Encoder or Decoder path is not set.");
+            return;
+        }
+        try
+        {
+            //sam = new SAM2(EncoderPath, DecoderPath);
+            sam = new MobileSAM(EncoderPath, DecoderPath, ConfigureExecutionProvider);
+            Debug.WriteLine("SAM model loaded successfully.");
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error loading SAM model: {ex.Message}");
+            //Dialog
+            Application.Current.MainPage.DisplayAlert("Error", "Failed to load SAM model. Please check the paths and try again.", "OK");
+        }
+    }
 
-        sam = new MobileSAM(mobileSamEncoderPath, mobileSamDecoderPath, ConfigureExecutionProvider);
+    [RelayCommand]
+    private async Task SelecEncoderPath()
+    {
+        await FilePicker.Default.PickAsync(new PickOptions
+        {
+            PickerTitle = "Select Encoder Model",
+        }).ContinueWith(PickOptions =>
+        {
+            if (PickOptions.Result != null)
+            {
+                EncoderPath = PickOptions.Result.FullPath;
+                Preferences.Set("encoderPath", EncoderPath);
+                Debug.WriteLine($"Encoder Path: {EncoderPath}");
+            }
+            else
+            {
+                Debug.WriteLine("No file selected for encoder.");
+            }
+        });
+    }
+
+    [RelayCommand]
+    private void SelectDecoderPath()
+    {
+        FilePicker.Default.PickAsync(new PickOptions
+        {
+            PickerTitle = "Select Decoder Model",
+        }).ContinueWith(PickOptions =>
+        {
+            if (PickOptions.Result != null)
+            {
+                DecoderPath = PickOptions.Result.FullPath;
+                Preferences.Set("decoderPath", DecoderPath);
+                Debug.WriteLine($"Decoder Path: {DecoderPath}");
+            }
+            else
+            {
+                Debug.WriteLine("No file selected for decoder.");
+            }
+        });
     }
 
     public void MaskImage()

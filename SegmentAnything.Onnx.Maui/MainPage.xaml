@@ -3,7 +3,9 @@
     x:Class="SegmentAnything.Onnx.Maui.MainPage"
     xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
     xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
-    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit">
+    xmlns:toolkit="http://schemas.microsoft.com/dotnet/2022/maui/toolkit"
+    xmlns:vm="clr-namespace:SegmentAnything.Onnx.Maui.ViewModels"
+    x:DataType="vm:MainPageViewModel">
 
     <ContentPage.Resources>
         <ResourceDictionary>
@@ -42,6 +44,35 @@
 
             <Image Source="{Binding MaskedImage, Mode=OneWay, Converter={StaticResource ByteArrayToImageSourceConverter}}" />
 
+            <!--  Select Decoder and Encoder Path  -->
+            <VerticalStackLayout Spacing="12">
+                <!--  Decoder Path  -->
+                <HorizontalStackLayout Spacing="8">
+                    <Entry
+                        x:Name="DecoderPathEntry"
+                        Placeholder="Decoder Path"
+                        Text="{Binding DecoderPath, Mode=TwoWay}" />
+                    <Button
+                        Command="{Binding SelectDecoderPathCommand}"
+                        HorizontalOptions="End"
+                        Text="Browse Decoder" />
+                </HorizontalStackLayout>
+                <!--  Encoder Path  -->
+                <HorizontalStackLayout Spacing="8">
+                    <Entry
+                        x:Name="EncoderPathEntry"
+                        Placeholder="Encoder Path"
+                        Text="{Binding EncoderPath, Mode=TwoWay}" />
+                    <Button
+                        Command="{Binding SelecEncoderPathCommand}"
+                        HorizontalOptions="End"
+                        Text="Browse Encoder" />
+                </HorizontalStackLayout>
+                <Button
+                    x:Name="LoadSAMButton"
+                    Command="{Binding LoadSAMCommand}"
+                    Text="Load SAM" />
+            </VerticalStackLayout>
 
         </VerticalStackLayout>
     </ScrollView>
