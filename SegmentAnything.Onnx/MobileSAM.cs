@@ -17,8 +17,8 @@ public class MobileSAM : SAMModelBase
     /// <param name="decoderModelPath">Path to the MobileSAM decoder ONNX model file.</param>
     /// <exception cref="FileNotFoundException">Thrown when model files are not found.</exception>
     /// <exception cref="ArgumentException">Thrown when model files are invalid.</exception>
-    public MobileSAM(string encoderModelPath, string decoderModelPath)
-        : base(encoderModelPath, decoderModelPath)
+    public MobileSAM(string encoderModelPath, string decoderModelPath, Action<SessionOptions> configureSessionOptions)
+        : base(encoderModelPath, decoderModelPath, configureSessionOptions)
     {
     }
 

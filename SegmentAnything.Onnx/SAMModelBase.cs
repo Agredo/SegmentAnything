@@ -1,61 +1,84 @@
 ﻿using Microsoft.ML.OnnxRuntime;
 using SkiaSharp;
+using System.Diagnostics;
 
 namespace SegmentAnything.Onnx;
 
 // Base-Klasse für SAM-Modelle (SkiaSharp Variante)
 public abstract class SAMModelBase : IDisposable
 {
+    protected Stopwatch stopwatch = new Stopwatch();
     protected InferenceSession _encoderSession;
     protected InferenceSession _decoderSession;
     protected bool _disposed = false;
 
     public const int ImageSize = 1024;
 
-    protected SAMModelBase(string encoderModelPath, string decoderModelPath)
+    public SessionOptions SessionOptions { get; set; }
+
+    protected SAMModelBase(string encoderModelPath, string decoderModelPath, Action<SessionOptions> ConfigureSessionOptions)
     {
-        var sessionOptions = new SessionOptions();
-        sessionOptions.EnableCpuMemArena = false;
-        sessionOptions.EnableMemoryPattern = false;
+        SessionOptions = new SessionOptions();
 
-        ConfigureExecutionProvider(sessionOptions);
+        if (ConfigureSessionOptions != null)
+            ConfigureSessionOptions(SessionOptions);
+        else
+            ConfigureExecutionProvider(SessionOptions);
 
-        _encoderSession = new InferenceSession(encoderModelPath, sessionOptions);
-        _decoderSession = new InferenceSession(decoderModelPath, sessionOptions);
+        _encoderSession = new InferenceSession(encoderModelPath, SessionOptions);
+        _decoderSession = new InferenceSession(decoderModelPath, SessionOptions);
     }
 
     private static void ConfigureExecutionProvider(SessionOptions sessionOptions)
     {
+        sessionOptions.EnableCpuMemArena = true;
+        sessionOptions.EnableMemoryPattern = true;
+        sessionOptions.InterOpNumThreads = Environment.ProcessorCount;
+        sessionOptions.IntraOpNumThreads = Environment.ProcessorCount;
+        sessionOptions.GraphOptimizationLevel = GraphOptimizationLevel.ORT_ENABLE_ALL;
+        sessionOptions.ExecutionMode = ExecutionMode.ORT_PARALLEL;
+
         // GPU unterstützung falls verfügbar
         var availableProviders = OrtEnv.Instance().GetAvailableProviders();
+        Debug.WriteLine("Available Execution Providers: " + string.Join(", ", availableProviders));
+
         if (availableProviders.Contains("CUDAExecutionProvider"))
         {
             sessionOptions.AppendExecutionProvider_CUDA();
+            Debug.WriteLine("CUDA execution provider added successfully.");
         }
-        else if (availableProviders.Contains("DmlExecutionProvider"))
+        if (availableProviders.Contains("DmlExecutionProvider"))
         {
             sessionOptions.AppendExecutionProvider_DML();
+            Debug.WriteLine("DirectML execution provider added successfully.");
         }
-        else if (availableProviders.Contains("CPUExecutionProvider"))
-        {
-            sessionOptions.AppendExecutionProvider_CPU();
-        }
-        else if (availableProviders.Contains("OpenVINOExecutionProvider"))
+        if (availableProviders.Contains("OpenVINOExecutionProvider"))
         {
             sessionOptions.AppendExecutionProvider_OpenVINO();
+            Debug.WriteLine("OpenVINO execution provider added successfully.");
         }
-        else if (availableProviders.Contains("NnapiExecutionProvider"))
-        {
-            sessionOptions.AppendExecutionProvider_Nnapi();
-        }
-        else if (availableProviders.Contains("CANNExecutionProvider"))
+        if (availableProviders.Contains("CANNExecutionProvider"))
         {
             sessionOptions.AppendExecutionProvider("CANNExecutionProvider");
+            
         }
-        else
+        if (availableProviders.Contains("QNNExecutionProvider"))
         {
-            throw new NotSupportedException("No supported execution provider found. Please install ONNX Runtime with GPU support.");
+            sessionOptions.AppendExecutionProvider("QNNExecutionProvider");
+            Debug.WriteLine("QNN execution provider added successfully.");
         }
+
+        if (availableProviders.Contains("NnapiExecutionProvider"))
+        {
+            sessionOptions.AppendExecutionProvider("NnapiExecutionProvider");
+            Debug.WriteLine("NnapiExecutionProvider execution provider added successfully.");
+        }
+        else if(availableProviders.Contains("XnnpackExecutionProvider"))
+        {
+            sessionOptions.AppendExecutionProvider("XnnpackExecutionProvider");
+            Debug.WriteLine("XNNPACK execution provider added successfully.");
+        }
+
     }
 
     protected virtual float[] PreprocessImage(SKBitmap image)

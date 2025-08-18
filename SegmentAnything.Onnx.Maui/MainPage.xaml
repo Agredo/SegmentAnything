@@ -29,14 +29,16 @@
                         StrokeThickness="3"
                         VerticalOptions="Fill" />
                 </Grid>
-            </Grid>
+                <Button
+                    x:Name="CaptureButton"
+                    Grid.Row="2"
+                    Grid.Column="0"
+                    Clicked="CaptureButton_Clicked"
+                    HorizontalOptions="Center"
+                    Text="Capture Image"
+                    VerticalOptions="End" />
 
-            <Button
-                x:Name="CaptureButton"
-                Grid.Row="2"
-                Grid.Column="0"
-                Clicked="CaptureButton_Clicked"
-                Text="Capture Image" />
+            </Grid>
 
             <Image Source="{Binding MaskedImage, Mode=OneWay, Converter={StaticResource ByteArrayToImageSourceConverter}}" />
 

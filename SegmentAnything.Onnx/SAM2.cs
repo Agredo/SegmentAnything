@@ -1,6 +1,7 @@
 ﻿using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using SkiaSharp;
+using System.Diagnostics;
 
 namespace SegmentAnything.Onnx;
 
@@ -20,8 +21,8 @@ public class SAM2 : SAMModelBase
     /// <param name="decoderModelPath">Path to the SAM2 decoder ONNX model file.</param>
     /// <exception cref="FileNotFoundException">Thrown when model files are not found.</exception>
     /// <exception cref="ArgumentException">Thrown when model files are invalid.</exception>
-    public SAM2(string encoderModelPath, string decoderModelPath)
-        : base(encoderModelPath, decoderModelPath)
+    public SAM2(string encoderModelPath, string decoderModelPath, Action<SessionOptions> configureSessionOptions)
+        : base(encoderModelPath, decoderModelPath, configureSessionOptions)
     {
         _memoryStates = new Dictionary<int, SAMMemoryState>();
     }
@@ -61,11 +62,15 @@ public class SAM2 : SAMModelBase
         if (points.Length != labels.Length)
             throw new ArgumentException("Points and labels must have the same length");
 
+        stopwatch.Start();
         // 1. Image Encoding
         var encoderOutputs = EncodeImageWithMemory(image, frameIndex);
+        stopwatch.Stop();
+        Debug.WriteLine($"Encoding: {stopwatch.ElapsedMilliseconds}ms");
 
         // 2. Decoding mit temporalem Kontext
         return DecodeWithTemporalContext(encoderOutputs, points, labels, frameIndex, boundingBox, image.Width, image.Height);
+
     }
 
     private EncoderOutputs EncodeImageWithMemory(SKBitmap image, int frameIndex)
@@ -146,7 +151,10 @@ public class SAM2 : SAMModelBase
             NamedOnnxValue.CreateFromTensor("has_mask_input", new DenseTensor<float>(new float[] { 0 }, new[] { 1 }))
         };
 
+        stopwatch.Restart();
         using var decoderResults = _decoderSession.Run(decoderInputs);
+        stopwatch.Stop();
+        Debug.WriteLine($"Decoding: {stopwatch.ElapsedMilliseconds}ms");
 
         var masks = decoderResults.First(x => x.Name == "masks").AsTensor<float>();
         var scores = decoderResults.First(x => x.Name == "iou_predictions").AsTensor<float>();
