@@ -52,6 +52,11 @@ public partial class MainPageViewModel
 
             sam = new MobileSAM(EncoderPath, DecoderPath, ConfigureExecutionProvider);
         }
+        else
+        {
+            Application.Current.MainPage.DisplayAlert("Error", "Encoder or Decoder path is not set. Please select the model paths.", "OK");
+            Debug.WriteLine("Encoder or Decoder path is not set.");
+        }
     }
 
     private async void PermissionCheck()
