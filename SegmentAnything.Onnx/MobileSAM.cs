@@ -1,6 +1,7 @@
 ﻿using Microsoft.ML.OnnxRuntime;
 using Microsoft.ML.OnnxRuntime.Tensors;
 using SkiaSharp;
+using System.Diagnostics;
 
 namespace SegmentAnything.Onnx;
 
@@ -72,7 +73,11 @@ public class MobileSAM : SAMModelBase
     /// </remarks>
     private DenseTensor<float> EncodeImage(SKBitmap image)
     {
+        stopwatch.Start();
         var imageData = PreprocessImage(image);
+        stopwatch.Stop();
+        Debug.WriteLine($"Image preprocessing took {stopwatch.ElapsedMilliseconds} ms");
+
         var imageTensor = new DenseTensor<float>(imageData, new[] { 1, 3, ImageSize, ImageSize });
 
         var inputs = new List<NamedOnnxValue>
@@ -80,7 +85,11 @@ public class MobileSAM : SAMModelBase
             NamedOnnxValue.CreateFromTensor("image", imageTensor)
         };
 
+        stopwatch.Restart();
         using var results = _encoderSession.Run(inputs);
+        stopwatch.Stop();
+        Debug.WriteLine($"Encoder inference took {stopwatch.ElapsedMilliseconds} ms");
+
         var features = results.First().AsTensor<float>();
 
         // Features kopieren für späteren Gebrauch

@@ -8,6 +8,7 @@ namespace SegmentAnything.Onnx.Maui.ViewModels;
 [ObservableObject]
 public partial class MainPageViewModel
 {
+    Stopwatch stopwatch = new Stopwatch();
 
     public Stream Image { get; set; }
 
@@ -109,6 +110,7 @@ public partial class MainPageViewModel
 
     public void MaskImage()
     {
+
         using var managedStream = new SKManagedStream(Image);
         using var codec = SKCodec.Create(managedStream);
         var info = codec.Info;        
@@ -118,8 +120,6 @@ public partial class MainPageViewModel
 
     private void SegmentPersonWithBoundingBox(SAMModelBase sam2, SKBitmap image)
     {
-        var stopwatch = Stopwatch.StartNew();
-
         int imageWidth = image.Width;
         int imageHeight = image.Height;
         Debug.WriteLine($"Image Size: {imageWidth} x {imageHeight}");
