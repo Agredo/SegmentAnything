@@ -271,11 +271,3 @@ public partial class MainPageViewModel
     }
 
 }
-
-public static class Extensions
-{
-    public static async void Await(this Task task)
-    {
-        await task;
-    }
-}
