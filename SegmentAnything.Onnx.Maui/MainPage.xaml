@@ -43,37 +43,6 @@
             </Grid>
 
             <Image Source="{Binding MaskedImage, Mode=OneWay, Converter={StaticResource ByteArrayToImageSourceConverter}}" />
-
-            <!--  Select Decoder and Encoder Path  -->
-            <VerticalStackLayout Spacing="12">
-                <!--  Decoder Path  -->
-                <HorizontalStackLayout Spacing="8">
-                    <Entry
-                        x:Name="DecoderPathEntry"
-                        Placeholder="Decoder Path"
-                        Text="{Binding DecoderPath, Mode=TwoWay}" />
-                    <Button
-                        Command="{Binding SelectDecoderPathCommand}"
-                        HorizontalOptions="End"
-                        Text="Browse Decoder" />
-                </HorizontalStackLayout>
-                <!--  Encoder Path  -->
-                <HorizontalStackLayout Spacing="8">
-                    <Entry
-                        x:Name="EncoderPathEntry"
-                        Placeholder="Encoder Path"
-                        Text="{Binding EncoderPath, Mode=TwoWay}" />
-                    <Button
-                        Command="{Binding SelecEncoderPathCommand}"
-                        HorizontalOptions="End"
-                        Text="Browse Encoder" />
-                </HorizontalStackLayout>
-                <Button
-                    x:Name="LoadSAMButton"
-                    Command="{Binding LoadSAMCommand}"
-                    Text="Load SAM" />
-            </VerticalStackLayout>
-
         </VerticalStackLayout>
     </ScrollView>
 

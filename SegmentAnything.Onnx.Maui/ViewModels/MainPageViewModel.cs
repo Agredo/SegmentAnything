@@ -1,6 +1,4 @@
-﻿using CommunityToolkit.Maui.Storage;
-using CommunityToolkit.Mvvm.ComponentModel;
-using CommunityToolkit.Mvvm.Input;
+﻿using CommunityToolkit.Mvvm.ComponentModel;
 using Microsoft.ML.OnnxRuntime;
 using SkiaSharp;
 using System.Diagnostics;
@@ -10,21 +8,6 @@ namespace SegmentAnything.Onnx.Maui.ViewModels;
 [ObservableObject]
 public partial class MainPageViewModel
 {
-    //// Windows paths for SAM2 models
-    //string encoderPath = @"C:\Projects\Models\SAM\SAM2\sam2_hiera_tiny.encoder.onnx";
-    //string decoderPath = @"C:\Projects\Models\SAM\SAM2\sam2_hiera_tiny.decoder.onnx";
-
-    //// Windows paths for MobileSAM models
-    //string mobileSamDecoderPath = @"C:\Projects\Models\SAM\MobileSam\Qualcom\mobilesam-mobilesamdecoder.onnx\model.onnx\model.onnx";
-    //string mobileSamEncoderPath = @"C:\Projects\Models\SAM\MobileSam\Qualcom\mobilesam-mobilesamencoder.onnx\model.onnx\model.onnx";
-
-    ////Android paths for MobileSAM models
-    //string mobileSamDecoderPath = @"/storage/emulated/0/Models/SAM/MobileSAM/decoder/model.onnx";
-    //string mobileSamEncoderPath = @"/storage/emulated/0/Models/SAM/MobileSAM/encoder/model.onnx";
-
-    ////Android paths for SAM2 models
-    //string encoderPath = @"/storage/emulated/0/Models/SAM/SAM2/encoder.onnx";
-    //string decoderPath = @"/storage/emulated/0/Models/SAM/SAM2/decoder.onnx";
 
     public Stream Image { get; set; }
 
@@ -46,17 +29,66 @@ public partial class MainPageViewModel
         EncoderPath = Preferences.Get("encoderPath", string.Empty);
         DecoderPath = Preferences.Get("decoderPath", string.Empty);
 
-        if(!string.IsNullOrEmpty(EncoderPath) && !string.IsNullOrEmpty(DecoderPath))
-        {
-            //sam = new SAM2(EncoderPath, DecoderPath);
 
-            sam = new MobileSAM(EncoderPath, DecoderPath, ConfigureExecutionProvider);
+        if (string.IsNullOrEmpty(EncoderPath) && string.IsNullOrEmpty(DecoderPath))
+        {
+            DownloadMobileSAMModels().Await();
         }
         else
         {
-            Application.Current.MainPage.DisplayAlert("Error", "Encoder or Decoder path is not set. Please select the model paths.", "OK");
-            Debug.WriteLine("Encoder or Decoder path is not set.");
+            sam = new MobileSAM(EncoderPath, DecoderPath, ConfigureExecutionProvider);
         }
+    }
+
+    private async Task DownloadMobileSAMModels()
+    {
+        string downloadEncoderOnnxURL = "https://www.agredoapplication.com/models/sam/mobilesam/encoder/model.onnx";
+        string downloadEncoderDataURL = "https://www.agredoapplication.com/models/sam/mobilesam/encoder/model.data";
+        string downloadDecoderOnnxURL = "https://www.agredoapplication.com/models/sam/mobilesam/decoder/model.onnx";
+        string downloadDecoderDataURL = "https://www.agredoapplication.com/models/sam/mobilesam/decoder/model.data";
+
+        //Download models from URLs via HttpClient or WebClient and store onnx paths in Preferences
+        using var httpClient = new HttpClient();
+        try
+        {
+            if (string.IsNullOrEmpty(EncoderPath) || !File.Exists(EncoderPath))
+            {
+                //onnx file
+                Directory.CreateDirectory(Path.Combine(FileSystem.AppDataDirectory, "encoder"));
+                EncoderPath = Path.Combine(FileSystem.AppDataDirectory, "encoder", "model.onnx");
+                var encoderOnnxData = await httpClient.GetByteArrayAsync(downloadEncoderOnnxURL);
+                await File.WriteAllBytesAsync(EncoderPath, encoderOnnxData);
+                Preferences.Set("encoderPath", EncoderPath);
+
+                //data file
+                var encoderDataPath = Path.Combine(FileSystem.AppDataDirectory, "encoder", "model.data");
+                var encoderData = await httpClient.GetByteArrayAsync(downloadEncoderDataURL);
+                await File.WriteAllBytesAsync(encoderDataPath, encoderData);
+            }
+            if (string.IsNullOrEmpty(DecoderPath) || !File.Exists(DecoderPath))
+            {
+                //onnx file
+                Directory.CreateDirectory(Path.Combine(FileSystem.AppDataDirectory, "decoder"));
+                DecoderPath = Path.Combine(FileSystem.AppDataDirectory, "decoder", "model.onnx");
+                var decoderOnnxData = await httpClient.GetByteArrayAsync(downloadDecoderOnnxURL);
+                await File.WriteAllBytesAsync(DecoderPath, decoderOnnxData);
+                Preferences.Set("decoderPath", DecoderPath);
+
+                //data file
+                var decoderDataPath = Path.Combine(FileSystem.AppDataDirectory, "decoder", "model.data");
+                var decoderData = await httpClient.GetByteArrayAsync(downloadDecoderDataURL);
+                await File.WriteAllBytesAsync(decoderDataPath, decoderData);
+            }
+        }
+        catch (Exception ex)
+        {
+            Debug.WriteLine($"Error downloading models: {ex.Message}");
+            return;
+        }
+
+
+        sam = new MobileSAM(EncoderPath, DecoderPath, ConfigureExecutionProvider);
+
     }
 
     private async void PermissionCheck()
@@ -71,72 +103,8 @@ public partial class MainPageViewModel
             Debug.WriteLine("Permission denied");
             return;
         }
-        
+
         Debug.WriteLine("Permission granted");
-    }
-
-    [RelayCommand]
-    private void LoadSAM()
-    {
-        if (string.IsNullOrEmpty(EncoderPath) || string.IsNullOrEmpty(DecoderPath))
-        {
-            Debug.WriteLine("Encoder or Decoder path is not set.");
-            return;
-        }
-        try
-        {
-            //sam = new SAM2(EncoderPath, DecoderPath);
-            sam = new MobileSAM(EncoderPath, DecoderPath, ConfigureExecutionProvider);
-            Debug.WriteLine("SAM model loaded successfully.");
-        }
-        catch (Exception ex)
-        {
-            Debug.WriteLine($"Error loading SAM model: {ex.Message}");
-            //Dialog
-            Application.Current.MainPage.DisplayAlert("Error", "Failed to load SAM model. Please check the paths and try again.", "OK");
-        }
-    }
-
-    [RelayCommand]
-    private async Task SelecEncoderPath()
-    {
-        await FilePicker.Default.PickAsync(new PickOptions
-        {
-            PickerTitle = "Select Encoder Model",
-        }).ContinueWith(PickOptions =>
-        {
-            if (PickOptions.Result != null)
-            {
-                EncoderPath = PickOptions.Result.FullPath;
-                Preferences.Set("encoderPath", EncoderPath);
-                Debug.WriteLine($"Encoder Path: {EncoderPath}");
-            }
-            else
-            {
-                Debug.WriteLine("No file selected for encoder.");
-            }
-        });
-    }
-
-    [RelayCommand]
-    private void SelectDecoderPath()
-    {
-        FilePicker.Default.PickAsync(new PickOptions
-        {
-            PickerTitle = "Select Decoder Model",
-        }).ContinueWith(PickOptions =>
-        {
-            if (PickOptions.Result != null)
-            {
-                DecoderPath = PickOptions.Result.FullPath;
-                Preferences.Set("decoderPath", DecoderPath);
-                Debug.WriteLine($"Decoder Path: {DecoderPath}");
-            }
-            else
-            {
-                Debug.WriteLine("No file selected for decoder.");
-            }
-        });
     }
 
     public void MaskImage()
@@ -302,4 +270,12 @@ public partial class MainPageViewModel
         }
     }
 
+}
+
+public static class Extensions
+{
+    public static async void Await(this Task task)
+    {
+        await task;
+    }
 }
